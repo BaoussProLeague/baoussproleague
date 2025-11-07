@@ -1,6 +1,5 @@
 {
   "crons": [{
     "path": "/api/cron/sync-fpl-data",
-    "schedule": "*/5 * * * *"
-  }]
+    "schedule": "0 21 * * *"  }]
 }
