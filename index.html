@@ -1181,5 +1181,55 @@
 
         document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
+
+
+<!-- Manual Sync Button -->
+<button id="manualSyncBtn" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; padding: 15px 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; cursor: pointer; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" onclick="manualSync()">🔄 Sync Now</button>
+
+<script>
+async function manualSync() {
+  const btn = document.getElementById('manualSyncBtn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Syncing...';
+  btn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+  
+  try {
+    const response = await fetch('/api/manual-sync');
+    const data = await response.json();
+    
+    if (data.success) {
+      btn.innerHTML = '✅ Synced!';
+      btn.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
+      
+      // Reload data
+      await getManagerData();
+      await getAnnouncements();
+      await getEliminations();
+      await renderHome();
+      await renderClassicLeague();
+      await renderLMS();
+      await renderH2H();
+      
+      setTimeout(() => {
+        btn.innerHTML = '🔄 Sync Now';
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        btn.disabled = false;
+      }, 3000);
+    } else {
+      throw new Error(data.error || 'Sync failed');
+    }
+  } catch (error) {
+    console.error('Manual sync error:', error);
+    btn.innerHTML = '❌ Failed';
+    btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)';
+    
+    setTimeout(() => {
+      btn.innerHTML = '🔄 Sync Now';
+      btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      btn.disabled = false;
+    }, 3000);
+  }
+}
+</script>
 </body>
 </html>
