@@ -6,6 +6,7 @@
     <title>Baouss Pro League - FPL Dashboard</title>
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/module/index.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -25,15 +26,15 @@
             --text-secondary: #CBD5E1;
             --success: #10B981;
             --danger: #EF4444;
+            --warning: #F59E0B;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #0F172A 0%, #1A1F36 50%, #0F172A 100%);
             color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
-            backdrop-filter: blur(10px);
         }
 
         .container {
@@ -42,19 +43,8 @@
             padding: 20px;
         }
 
-        /* GLASS MORPHISM */
-        .glass {
-            background: var(--glass-light);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        /* HEADER */
         .header {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
             border: 1px solid var(--glass-border);
             padding: 40px;
             border-radius: 20px;
@@ -64,14 +54,12 @@
         }
 
         .header h1 {
-            font-size: 3rem;
+            font-size: 2.5rem;
             background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
             margin-bottom: 10px;
             font-weight: 700;
-            letter-spacing: -1px;
         }
 
         .header p {
@@ -79,14 +67,13 @@
             font-size: 0.95rem;
         }
 
-        /* NAVIGATION */
         .nav-container {
             display: flex;
             gap: 12px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
             overflow-x: auto;
             padding-bottom: 10px;
-            flex-wrap: wrap;
         }
 
         .nav-tab {
@@ -96,17 +83,15 @@
             padding: 12px 24px;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.3s;
             white-space: nowrap;
             font-weight: 600;
             font-size: 0.95rem;
         }
 
         .nav-tab:hover {
-            background: var(--glass-light);
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
-            transform: translateY(-2px);
         }
 
         .nav-tab.active {
@@ -116,22 +101,20 @@
             box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
         }
 
-        /* CONTENT AREAS */
         .content {
             display: none;
-            animation: fadeIn 0.3s ease-in;
         }
 
         .content.active {
             display: block;
+            animation: fadeIn 0.3s ease-in;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        /* CARDS */
         .card {
             background: var(--glass-light);
             border: 1px solid var(--glass-border);
@@ -139,7 +122,6 @@
             padding: 24px;
             margin-bottom: 20px;
             backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
         }
 
         .card-title {
@@ -147,15 +129,11 @@
             color: var(--accent-cyan);
             font-weight: 700;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
-        /* STATS GRID */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 20px;
         }
@@ -166,13 +144,6 @@
             padding: 20px;
             border-radius: 12px;
             text-align: center;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            border-color: var(--accent-cyan);
-            transform: translateY(-4px);
         }
 
         .stat-label {
@@ -182,12 +153,11 @@
         }
 
         .stat-value {
-            font-size: 2.2rem;
+            font-size: 2rem;
             color: var(--accent-cyan);
             font-weight: 700;
         }
 
-        /* TABLES */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -208,7 +178,7 @@
         }
 
         td {
-            padding: 14px 16px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--glass-border);
         }
 
@@ -216,7 +186,6 @@
             background: rgba(6, 182, 212, 0.05);
         }
 
-        /* RANK INDICATORS */
         .rank-up {
             color: var(--success);
             font-weight: bold;
@@ -227,7 +196,11 @@
             font-weight: bold;
         }
 
-        /* PAGINATION */
+        .danger-zone {
+            background: rgba(239, 68, 68, 0.1) !important;
+            color: #FCA5A5;
+        }
+
         .pagination {
             display: flex;
             gap: 8px;
@@ -252,7 +225,6 @@
             color: var(--primary);
         }
 
-        /* ANNOUNCEMENTS */
         .announcement {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
             border: 1px solid rgba(16, 185, 129, 0.3);
@@ -261,17 +233,8 @@
             margin-bottom: 20px;
             color: var(--accent-cyan);
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
         }
 
-        .announcement::before {
-            content: "📢";
-            font-size: 1.5rem;
-        }
-
-        /* LOADING */
         .spinner {
             border: 3px solid var(--glass-border);
             border-top: 3px solid var(--accent-cyan);
@@ -287,7 +250,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* ERROR */
         .error-message {
             background: rgba(239, 68, 68, 0.1);
             border: 1px solid rgba(239, 68, 68, 0.3);
@@ -295,51 +257,86 @@
             padding: 16px;
             color: #FCA5A5;
             margin: 20px 0;
+        }
+
+        .fixture-card {
+            background: var(--glass-light);
+            border: 1px solid var(--glass-border);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .error-message button {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 8px 16px;
+        .fixture-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .fixture-status {
+            padding: 4px 8px;
             border-radius: 6px;
-            cursor: pointer;
+            font-size: 0.75rem;
             font-weight: 600;
         }
 
-        /* RESPONSIVE */
+        .fixture-live {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .fixture-upcoming {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .admin-form {
+            display: grid;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .admin-form input, .admin-form select, .admin-form textarea {
+            background: var(--glass-light);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px 15px;
+            border-radius: 6px;
+        }
+
+        .admin-btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            color: var(--primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .admin-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
         @media (max-width: 768px) {
-            .header {
-                padding: 20px;
-            }
-
-            .header h1 {
-                font-size: 1.8rem;
-            }
-
-            .container {
-                padding: 10px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            table {
-                font-size: 0.85rem;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            .nav-tab {
-                padding: 10px 16px;
-                font-size: 0.85rem;
-            }
+            .header h1 { font-size: 1.8rem; }
+            .nav-tab { padding: 10px 16px; font-size: 0.85rem; }
+            table { font-size: 0.85rem; }
+            th, td { padding: 8px 10px; }
+            .fixture-card { flex-direction: column; align-items: flex-start; gap: 8px; }
         }
     </style>
 </head>
@@ -372,56 +369,58 @@
                 <div class="stats-grid" id="homeStats">
                     <div class="stat-card">
                         <div class="stat-label">Current GW</div>
-                        <div class="stat-value">10</div>
+                        <div class="stat-value" id="currentGWDisplay">--</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Classic Managers</div>
                         <div class="stat-value">60</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Total Prize Pool</div>
-                        <div class="stat-value">₹1.2L+</div>
-                    </div>
-                    <div class="stat-card">
                         <div class="stat-label">LMS Survivors</div>
                         <div class="stat-value" id="lmsSurvivors">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Prize Pool</div>
+                        <div class="stat-value">₹1.2L+</div>
                     </div>
                 </div>
             </div>
 
-            <!-- FIXTURES -->
             <div class="card">
-                <div class="card-title">⚽ Gameweek 10 Fixtures</div>
-                <div id="fixtures" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px;"></div>
+                <div class="card-title">⚽ Current GW Fixtures</div>
+                <div id="currentFixtures"></div>
             </div>
 
-            <!-- CAPTAIN PICKS CHART -->
+            <div class="card" style="display: none;" id="nextGWCard">
+                <div class="card-title">📅 Next GW Fixtures</div>
+                <div id="nextFixtures"></div>
+            </div>
+
             <div class="card">
-                <div class="card-title">👑 Captain Picks Distribution</div>
-                <div style="max-width: 500px; margin: 0 auto;">
+                <div class="card-title">👑 Captain Picks Distribution (Top 10)</div>
+                <div style="max-width: 500px; margin: 0 auto; height: 300px;">
                     <canvas id="captainChart"></canvas>
                 </div>
             </div>
 
-            <!-- CHIPS USED -->
             <div class="card">
                 <div class="card-title">🎮 Chips Used This GW</div>
                 <div class="stats-grid" id="chipsUsed">
                     <div class="stat-card">
                         <div class="stat-label">Wildcards</div>
-                        <div class="stat-value">--</div>
+                        <div class="stat-value" id="wildcardsCount">0</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Bench Boosts</div>
-                        <div class="stat-value">--</div>
+                        <div class="stat-value" id="bbCount">0</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Free Hits</div>
-                        <div class="stat-value">--</div>
+                        <div class="stat-value" id="fhCount">0</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Triple Captains</div>
-                        <div class="stat-value">--</div>
+                        <div class="stat-value" id="tcCount">0</div>
                     </div>
                 </div>
             </div>
@@ -440,9 +439,9 @@
                             <th>Manager</th>
                             <th>Team</th>
                             <th>Captain</th>
-                            <th>GW Points</th>
-                            <th>Month Total</th>
-                            <th>Overall Points</th>
+                            <th>GW Pts</th>
+                            <th>Month</th>
+                            <th>Overall</th>
                         </tr>
                     </thead>
                     <tbody id="classicBody"></tbody>
@@ -459,11 +458,11 @@
                 <table id="lmsTable" style="display: none;">
                     <thead>
                         <tr>
-                            <th>Danger Rank</th>
+                            <th>Rank</th>
                             <th>Manager</th>
                             <th>Team</th>
                             <th>GW Points</th>
-                            <th>Players</th>
+                            <th>Players Yet to Play</th>
                         </tr>
                     </thead>
                     <tbody id="lmsBody"></tbody>
@@ -477,8 +476,9 @@
                     <thead>
                         <tr>
                             <th>GW</th>
-                            <th>Eliminated Managers</th>
+                            <th>Eliminated Manager</th>
                             <th>Points</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="eliminationBody"></tbody>
@@ -492,7 +492,7 @@
                 <div class="card-title">🎪 Head to Head League</div>
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-label">Gold Cup (Top 16)</div>
+                        <div class="stat-label">Gold Cup (1-16)</div>
                         <div class="stat-value" style="font-size: 1.2rem;">₹10,000</div>
                     </div>
                     <div class="stat-card">
@@ -527,437 +527,60 @@
                 </table>
                 <div class="pagination" id="h2hPagination"></div>
             </div>
-
-            <div class="card" id="knockoutCard" style="display: none; opacity: 0.5;">
-                <div class="card-title">🏆 Cup Knockouts (Starting GW32)</div>
-                <p style="color: var(--text-secondary); text-align: center; padding: 40px;">
-                    ⏳ Knockout brackets will be displayed when they begin
-                </p>
-            </div>
         </div>
 
         <!-- PRIZES TAB -->
         <div id="prizes" class="content">
-            <div style="margin-bottom: 20px;">
-                <button class="nav-tab" onclick="switchPrizeTab('rules')" id="rulesTabBtn">📋 Prize Rules</button>
-                <button class="nav-tab" onclick="switchPrizeTab('winners')" id="winnersTabBtn">🏆 Current Winners</button>
+            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+                <button class="nav-tab active" onclick="switchPrizeTab('rules')">📋 Prize Rules</button>
+                <button class="nav-tab" onclick="switchPrizeTab('winners')">🏆 Current Winners</button>
             </div>
 
-            <!-- PRIZE RULES -->
             <div id="rulesTab">
                 <div class="card">
                     <div class="card-title">💰 Classic League (Top 8)</div>
                     <table>
-                        <thead>
-                            <tr>
-                                <th>Position</th>
-                                <th>Prize Amount (₹)</th>
-                                <th>Description</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>🥇 Rank 1</td>
-                                <td><strong>16,000</strong></td>
-                                <td>Highest overall score at season end</td>
-                            </tr>
-                            <tr>
-                                <td>🥈 Rank 2</td>
-                                <td><strong>11,000</strong></td>
-                                <td>2nd highest overall score</td>
-                            </tr>
-                            <tr>
-                                <td>🥉 Rank 3</td>
-                                <td><strong>7,000</strong></td>
-                                <td>3rd highest overall score</td>
-                            </tr>
-                            <tr>
-                                <td>🏆 Rank 4</td>
-                                <td><strong>4,000</strong></td>
-                                <td>4th highest overall score</td>
-                            </tr>
-                            <tr>
-                                <td>🏆 Rank 5</td>
-                                <td><strong>3,000</strong></td>
-                                <td>5th highest overall score</td>
-                            </tr>
-                            <tr>
-                                <td>🏆 Rank 6</td>
-                                <td><strong>2,500</strong></td>
-                                <td>6th highest overall score</td>
-                            </tr>
-                            <tr>
-                                <td>🏆 Rank 7</td>
-                                <td><strong>2,000</strong></td>
-                                <td>7th highest overall score</td>
-                            </tr>
-                            <tr>
-                                <td>🏆 Rank 8</td>
-                                <td><strong>1,000</strong></td>
-                                <td>8th highest overall score</td>
-                            </tr>
-                        </tbody>
+                        <tr><td><strong>🥇 Rank 1</strong></td><td>₹16,000</td></tr>
+                        <tr><td><strong>🥈 Rank 2</strong></td><td>₹11,000</td></tr>
+                        <tr><td><strong>🥉 Rank 3</strong></td><td>₹7,000</td></tr>
+                        <tr><td><strong>🏆 Rank 4</strong></td><td>₹4,000</td></tr>
+                        <tr><td><strong>🏆 Rank 5</strong></td><td>₹3,000</td></tr>
+                        <tr><td><strong>🏆 Rank 6</strong></td><td>₹2,500</td></tr>
+                        <tr><td><strong>🏆 Rank 7</strong></td><td>₹2,000</td></tr>
+                        <tr><td><strong>🏆 Rank 8</strong></td><td>₹1,000</td></tr>
                     </table>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">🎮 Chip Prizes (₹1,000 each)</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Chip Type</th>
-                                <th>Prize (₹)</th>
-                                <th>How to Win</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>🔄 Wildcard</td>
-                                <td><strong>1,000</strong></td>
-                                <td>Highest GW score when activated</td>
-                            </tr>
-                            <tr>
-                                <td>🚀 Triple Captain</td>
-                                <td><strong>1,000</strong></td>
-                                <td>Highest GW score when used</td>
-                            </tr>
-                            <tr>
-                                <td>📈 Bench Boost</td>
-                                <td><strong>1,000</strong></td>
-                                <td>Highest GW score when used</td>
-                            </tr>
-                            <tr>
-                                <td>💫 Free Hit</td>
-                                <td><strong>1,000</strong></td>
-                                <td>Highest GW score when used</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">⭐ Special Prizes</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Prize Name</th>
-                                <th>Prize (₹)</th>
-                                <th>Criteria</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Team Value</td>
-                                <td>1,000</td>
-                                <td>Highest team value at season end</td>
-                            </tr>
-                            <tr>
-                                <td>Captain Points</td>
-                                <td>1,000</td>
-                                <td>Most points from captain picks (season)</td>
-                            </tr>
-                            <tr>
-                                <td>Comeback King/Queen</td>
-                                <td>1,000</td>
-                                <td>Most rank jump GW19-38 (must finish top half)</td>
-                            </tr>
-                            <tr>
-                                <td>Least Transfer Cost</td>
-                                <td>1,000</td>
-                                <td>Fewest hits (must finish top half)</td>
-                            </tr>
-                            <tr>
-                                <td>Most Bench Points</td>
-                                <td>1,000</td>
-                                <td>Highest bench points (whole season)</td>
-                            </tr>
-                            <tr>
-                                <td>Def + GK Points</td>
-                                <td>1,000</td>
-                                <td>Most points from defenders & GK</td>
-                            </tr>
-                            <tr>
-                                <td>First to 999</td>
-                                <td>1,000</td>
-                                <td>First to reach 999 points (live)</td>
-                            </tr>
-                            <tr>
-                                <td>First to 1499</td>
-                                <td>1,000</td>
-                                <td>First to reach 1499 points (live)</td>
-                            </tr>
-                            <tr>
-                                <td>Wildcard Vision</td>
-                                <td>2,000</td>
-                                <td>Most points in 5 GWs (WC GW + 4 after)</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">📅 Monthly Prizes</div>
-                    <div style="overflow-x: auto;">
-                        <table style="width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>Month</th>
-                                    <th>Gameweeks Included</th>
-                                    <th>Prize (₹)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><strong>August</strong></td>
-                                    <td>GW 1, 2, 3</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>September</strong></td>
-                                    <td>GW 4, 5, 6</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>October</strong></td>
-                                    <td>GW 7, 8, 9</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>November</strong></td>
-                                    <td>GW 10, 11, 12, 13</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>December</strong></td>
-                                    <td>GW 14, 15, 16, 17, 18, 19</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>January</strong></td>
-                                    <td>GW 20, 21, 22, 23, 24</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>February</strong></td>
-                                    <td>GW 25, 26, 27, 28</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>March</strong></td>
-                                    <td>GW 29, 30, 31</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>April</strong></td>
-                                    <td>GW 32, 33, 34</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>May</strong></td>
-                                    <td>GW 35, 36, 37, 38</td>
-                                    <td>₹1,000</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🎖️ Highest Rank Jump (Monthly)</div>
-                    <p style="color: var(--text-secondary); margin-bottom: 10px;">₹1,000 per month for manager with most rank improvement</p>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Gameweeks</th>
-                                <th>Prize (₹)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td>September</td><td>GW 4-6</td><td>1,000</td></tr>
-                            <tr><td>October</td><td>GW 7-9</td><td>1,000</td></tr>
-                            <tr><td>November</td><td>GW 10-13</td><td>1,000</td></tr>
-                            <tr><td>December</td><td>GW 14-19</td><td>1,000</td></tr>
-                            <tr><td>January</td><td>GW 20-24</td><td>1,000</td></tr>
-                            <tr><td>February</td><td>GW 25-28</td><td>1,000</td></tr>
-                            <tr><td>March</td><td>GW 29-31</td><td>1,000</td></tr>
-                            <tr><td>April</td><td>GW 32-34</td><td>1,000</td></tr>
-                            <tr><td>May</td><td>GW 35-38</td><td>1,000</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🎪 Head to Head Cups</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cup Type</th>
-                                <th>Participants</th>
-                                <th>Winner Prize</th>
-                                <th>Runner Up Prize</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Gold Cup</strong></td>
-                                <td>Top 16</td>
-                                <td>₹10,000</td>
-                                <td>₹6,000</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Silver Cup</strong></td>
-                                <td>Rank 17-32</td>
-                                <td>₹6,000</td>
-                                <td>₹2,500</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🎯 Last Manager Standing (LMS)</div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Position</th>
-                                <th>Prize (₹)</th>
-                                <th>Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Winner</strong></td>
-                                <td>₹15,000</td>
-                                <td>Last manager remaining</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Runner Up</strong></td>
-                                <td>₹1,000</td>
-                                <td>Eliminated in final week</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p style="color: var(--text-secondary); margin-top: 15px; font-size: 0.9rem;">
-                        ⚠️ <strong>Rebuy Pool:</strong> Prize pool may increase based on rebuy registrations (₹500 per rebuy, GW2-21)
-                    </p>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">📢 Mega Gameweeks</div>
+                    <div class="card-title">📅 Mega Gameweeks</div>
                     <table id="megaGWTable">
                         <thead>
-                            <tr>
-                                <th>Gameweek</th>
-                                <th>Prize (₹)</th>
-                                <th>Details</th>
-                            </tr>
+                            <tr><th>GW</th><th>Prize</th><th>Announced</th></tr>
                         </thead>
-                        <tbody id="megaGWBody">
-                            <tr>
-                                <td colspan="3" style="text-align: center; color: var(--text-secondary);">No Mega GWs announced yet</td>
-                            </tr>
-                        </tbody>
+                        <tbody id="megaGWBody"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- PRIZE WINNERS -->
             <div id="winnersTab" style="display: none;">
                 <div class="card">
-                    <div class="card-title">🏆 Current Top 8 - Classic League</div>
-                    <table id="prizeWinnersTable">
+                    <div class="card-title">🏆 Top 8 - Classic League</div>
+                    <table id="top8Table">
                         <thead>
-                            <tr>
-                                <th>Position</th>
-                                <th>Manager</th>
-                                <th>Points</th>
-                                <th>Prize (₹)</th>
-                            </tr>
+                            <tr><th>Rank</th><th>Manager</th><th>Points</th><th>Prize</th></tr>
                         </thead>
-                        <tbody id="prizeWinnersBody"></tbody>
+                        <tbody id="top8Body"></tbody>
                     </table>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">⭐ Other Prize Winners</div>
-                    <div id="otherPrizesContent" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;"></div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">📅 Manager of the Month - Current Races</div>
-                    <table id="motmCurrentTable">
+                    <div class="card-title">📅 Manager of the Month</div>
+                    <table id="motmTable">
                         <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Current Leader</th>
-                                <th>Points</th>
-                                <th>Status</th>
-                            </tr>
+                            <tr><th>Month</th><th>Current Leader</th><th>Points</th></tr>
                         </thead>
-                        <tbody id="motmCurrentBody"></tbody>
+                        <tbody id="motmBody"></tbody>
                     </table>
-
-                    <div style="margin-top: 30px;">
-                        <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">Previous MOTM Winners</h3>
-                        <table id="motmHistoryTable">
-                            <thead>
-                                <tr>
-                                    <th>Month</th>
-                                    <th>Winner</th>
-                                    <th>Points</th>
-                                </tr>
-                            </thead>
-                            <tbody id="motmHistoryBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🎖️ Monthly Rank Jump Leaders</div>
-                    <table id="rankJumpTable">
-                        <thead>
-                            <tr>
-                                <th>Month</th>
-                                <th>Leader</th>
-                                <th>Rank Jump</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rankJumpBody"></tbody>
-                    </table>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🏁 Race to Milestones</div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-                        <div>
-                            <h4 style="color: var(--accent-cyan); margin-bottom: 10px;">First to 999 Points</h4>
-                            <table id="race999Table">
-                                <thead>
-                                    <tr>
-                                        <th>Position</th>
-                                        <th>Manager</th>
-                                        <th>Points</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="race999Body"></tbody>
-                            </table>
-                        </div>
-                        <div>
-                            <h4 style="color: var(--accent-cyan); margin-bottom: 10px;">First to 1499 Points</h4>
-                            <table id="race1499Table">
-                                <thead>
-                                    <tr>
-                                        <th>Position</th>
-                                        <th>Manager</th>
-                                        <th>Points</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="race1499Body"></tbody>
-                            </table>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -976,54 +599,49 @@
                 <div class="card-title">🔐 Admin Panel</div>
                 <div id="adminAuth" style="text-align: center; padding: 20px;">
                     <input type="password" id="adminPassword" placeholder="Enter admin password" style="width: 200px; padding: 10px; margin: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;">
-                    <button class="nav-tab" onclick="authenticateAdmin()">Authenticate</button>
+                    <button class="admin-btn" onclick="authenticateAdmin()">Authenticate</button>
                 </div>
                 <div id="adminPanel" style="display: none;">
                     <h3 style="color: var(--success); margin-bottom: 20px;">✅ Admin Authenticated</h3>
 
                     <div style="margin-bottom: 30px;">
                         <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">📢 Announce Mega Gameweek</h4>
-                        <div style="display: grid; gap: 10px;">
-                            <select id="megaGWSelect" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;">
-                                <option>Select Gameweek...</option>
-                            </select>
-                            <input type="text" id="megaGWMessage" placeholder="Message (optional)" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;">
-                            <button class="nav-tab" onclick="announceMegaGW()">Announce Mega GW</button>
+                        <div class="admin-form">
+                            <select id="megaGWSelect" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;"></select>
+                            <input type="text" id="megaGWMessage" placeholder="Message (optional)">
+                            <button class="admin-btn" onclick="announceMegaGW()">Announce Mega GW</button>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 30px;">
                         <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">📣 Make Announcement</h4>
-                        <div style="display: grid; gap: 10px;">
-                            <textarea id="customAnnouncement" placeholder="Enter announcement message" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px; min-height: 80px;"></textarea>
-                            <button class="nav-tab" onclick="makeAnnouncement()">Post Announcement</button>
+                        <div class="admin-form">
+                            <textarea id="customAnnouncement" placeholder="Enter announcement message" style="min-height: 80px;"></textarea>
+                            <button class="admin-btn" onclick="makeAnnouncement()">Post Announcement</button>
                         </div>
                     </div>
 
                     <div style="margin-bottom: 30px;">
-                        <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">💳 LMS Rebuy Registrations (₹500)</h4>
-                        <div style="display: grid; gap: 10px;">
-                            <select id="rebuyManagerSelect" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;">
+                        <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">📋 Active Announcements</h4>
+                        <table id="announcementTable">
+                            <thead>
+                                <tr><th>Type</th><th>Message</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="announcementBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-bottom: 30px;">
+                        <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">💀 LMS Eliminations</h4>
+                        <div class="admin-form">
+                            <select id="eliminationGW" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;">
+                                <option>Select GW...</option>
+                            </select>
+                            <select id="eliminationManager" style="padding: 10px; background: var(--glass-light); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 6px;">
                                 <option>Select Manager...</option>
                             </select>
-                            <label style="color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" id="paymentStatus" style="width: 18px; height: 18px;">
-                                <span>Payment Received</span>
-                            </label>
-                            <button class="nav-tab" onclick="addLMSRebuy()">Add Rebuy</button>
-                        </div>
-                        <div style="margin-top: 20px; overflow-x: auto;">
-                            <table id="rebuyTable">
-                                <thead>
-                                    <tr>
-                                        <th>Manager</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="rebuyBody"></tbody>
-                            </table>
+                            <input type="number" id="eliminationPoints" placeholder="GW Points">
+                            <button class="admin-btn" onclick="addElimination()">Add Elimination</button>
                         </div>
                     </div>
                 </div>
@@ -1032,175 +650,142 @@
     </div>
 
     <script>
-        // ========== CONFIGURATION ==========
+        // ========== CONFIG ==========
         const CONFIG = {
-            classicLeagueId: 1229613,
-            lmsLeagueId: 1190208,
-            h2hLeagueId: 1190166,
-            currentGW: 10,
-            knockoutStartGW: 32,
-            backendUrl: '/api/proxy'
+            supabaseUrl: 'https://jdhsqhnoapiaknybvxpt.supabase.co',
+            supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkaHNxaG5vYXBpYWtueWJ2eHB0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MjUxNzEyOCwiZXhwIjoyMDc4MDkzMTI4fQ.wA5hbFl0c1_rdfo7zg1mBcVa49qPN7Cd8nK3NJQYFYU',
+            currentGW: 11
         };
 
-        const PRIZE_STRUCTURE = {
-            classic: { 1: 16000, 2: 11000, 3: 7000, 4: 4000, 5: 3000, 6: 2500, 7: 2000, 8: 1000 },
-            megaGW: 1000,
-            lms: { winner: 15000, runnerUp: 1000 },
-            h2h: { goldWinner: 10000, goldRunner: 6000, silverWinner: 6000, silverRunner: 2500 },
-            chips: 1000,
-            motm: 1000,
-            rankJump: 1000,
-            wildcardVision: 2000
-        };
-
-        const GW_MONTHS = {
-            'August': [1, 2, 3],
-            'September': [4, 5, 6],
-            'October': [7, 8, 9],
-            'November': [10, 11, 12, 13],
-            'December': [14, 15, 16, 17, 18, 19],
-            'January': [20, 21, 22, 23, 24],
-            'February': [25, 26, 27, 28],
-            'March': [29, 30, 31],
-            'April': [32, 33, 34],
-            'May': [35, 36, 37, 38]
-        };
+        // Initialize Supabase
+        const { createClient } = window.supabase;
+        const supabase = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
         let appState = {
-            classic: null,
-            lms: null,
-            h2h: null,
-            bootstrap: null,
-            managers: new Map(),
+            managers: [],
+            currentGW: 11,
+            nextGW: 12,
             adminAuthenticated: false,
-            announcements: [],
-            megaGWs: [],
-            rebuys: [],
+            captainChart: null,
             currentPage: { classic: 1, lms: 1, h2h: 1 },
             itemsPerPage: 20,
-            captainChart: null
+            announcements: [],
+            eliminations: []
         };
 
-        // ========== API CALLS ==========
-        async function fetchFPL(endpoint) {
+        // ========== SUPABASE FUNCTIONS ==========
+        async function getManagerData() {
             try {
-                const response = await fetch(`${CONFIG.backendUrl}?endpoint=${encodeURIComponent(endpoint)}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                return await response.json();
+                const { data, error } = await supabase
+                    .from('manager_data')
+                    .select('*')
+                    .order('overall_rank');
+
+                if (error) throw error;
+                appState.managers = data || [];
+                console.log(`✅ Loaded ${appState.managers.length} managers`);
+                return data || [];
             } catch (error) {
-                console.error('Fetch failed:', error);
-                throw error;
+                console.error('Error fetching manager data:', error);
+                return [];
             }
         }
 
-        async function loadAllData() {
+        async function getCurrentGW() {
             try {
-                console.log('📥 Loading FPL data...');
+                const { data, error } = await supabase
+                    .from('season_snapshot')
+                    .select('current_gw')
+                    .limit(1)
+                    .single();
 
-                const [bootstrap, classic, lms, h2h] = await Promise.all([
-                    fetchFPL('/bootstrap-static/'),
-                    fetchFPL(`/leagues-classic/${CONFIG.classicLeagueId}/standings/?page_standings=1`),
-                    fetchFPL(`/leagues-classic/${CONFIG.lmsLeagueId}/standings/?page_standings=1`),
-                    fetchFPL(`/leagues-h2h/${CONFIG.h2hLeagueId}/standings/?page_standings=1`)
-                ]);
-
-                appState.bootstrap = bootstrap;
-                appState.classic = classic;
-                appState.lms = lms;
-                appState.h2h = h2h;
-
-                // Load individual manager data for captain picks
-                await loadManagerDetails();
-
-                renderAllPages();
+                if (error) throw error;
+                appState.currentGW = data?.current_gw || 11;
+                appState.nextGW = appState.currentGW + 1;
+                return data?.current_gw || 11;
             } catch (error) {
-                console.error('Data load failed:', error);
-                showError('Failed to load data. Please try again.');
+                console.error('Error fetching current GW:', error);
+                return 11;
             }
         }
 
-        async function loadManagerDetails() {
-            if (!appState.classic?.standings?.results) return;
+        async function getAnnouncements() {
+            try {
+                const { data, error } = await supabase
+                    .from('announcements')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-            const managers = appState.classic.standings.results;
-            const managerIds = managers.map(m => m.entry);
-
-            console.log(`📥 Loading details for ${managerIds.length} managers...`);
-
-            for (const managerId of managerIds) {
-                try {
-                    const managerData = await fetchFPL(`/entry/${managerId}/`);
-                    appState.managers.set(managerId, managerData);
-                } catch (error) {
-                    console.error(`Failed to load manager ${managerId}:`, error);
-                }
+                if (error) throw error;
+                appState.announcements = data || [];
+                renderAnnouncements();
+            } catch (error) {
+                console.error('Error fetching announcements:', error);
             }
+        }
 
-            console.log('✅ Manager details loaded');
+        async function getEliminations() {
+            try {
+                const { data, error } = await supabase
+                    .from('lms_eliminations')
+                    .select('*')
+                    .order('gw');
+
+                if (error) throw error;
+                appState.eliminations = data || [];
+            } catch (error) {
+                console.error('Error fetching eliminations:', error);
+            }
         }
 
         // ========== RENDER FUNCTIONS ==========
-        function renderAllPages() {
-            renderHome();
-            renderClassicLeague();
-            renderLMS();
-            renderH2H();
-            renderPrizes();
-            renderReviews();
-        }
+        async function renderHome() {
+            // Current GW
+            document.getElementById('currentGWDisplay').textContent = appState.currentGW;
 
-        function renderHome() {
-            // Fixtures (mock data - replace with real API)
+            // LMS survivors
+            const lmsManagers = appState.managers.filter(m => 
+                !appState.eliminations.some(e => e.manager_id === m.manager_id)
+            );
+            document.getElementById('lmsSurvivors').textContent = lmsManagers.length;
+
+            // Render fixtures (mock data - replace with real fixtures API)
             const fixturesHtml = `
-                <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(6, 182, 212, 0.05)); border-color: rgba(16, 185, 129, 0.3);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem;">Arsenal 2 - 1 Brighton</div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Fri 12:30 IST</div>
-                        </div>
-                        <div style="color: var(--success);">✅ LIVE</div>
+                <div class="fixture-card">
+                    <div>
+                        <strong>Arsenal 2 - 1 Brighton</strong>
+                        <div class="fixture-time">Fri 12:30 IST</div>
                     </div>
+                    <span class="fixture-status fixture-live">✅ LIVE</span>
                 </div>
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem;">Man City vs Everton</div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Fri 15:00 IST</div>
-                        </div>
-                        <div style="color: var(--text-secondary);">⏳ UPCOMING</div>
+                <div class="fixture-card">
+                    <div>
+                        <strong>Man City vs Everton</strong>
+                        <div class="fixture-time">Fri 15:00 IST</div>
                     </div>
-                </div>
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem;">Liverpool vs Chelsea</div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">Sat 17:30 IST</div>
-                        </div>
-                        <div style="color: var(--text-secondary);">⏳ UPCOMING</div>
-                    </div>
+                    <span class="fixture-status fixture-upcoming">⏳ UPCOMING</span>
                 </div>
             `;
-            document.getElementById('fixtures').innerHTML = fixturesHtml;
+            document.getElementById('currentFixtures').innerHTML = fixturesHtml;
 
-            // Update LMS survivors count
-            if (appState.lms?.standings?.results) {
-                document.getElementById('lmsSurvivors').textContent = appState.lms.standings.results.length;
-            }
-
-            // Captain picks chart
+            // Render captain chart
             renderCaptainChart();
 
-            // Chips used
+            // Render chips used
             renderChipsUsed();
         }
 
         function renderCaptainChart() {
-            const captains = {};
-            appState.managers.forEach(manager => {
-                // This would require fetching GW picks - simplified for now
-                const captain = manager.name || 'Unknown';
-                captains[captain] = (captains[captain] || 0) + 1;
+            const captainCount = {};
+            appState.managers.forEach(m => {
+                if (m.captain_name) {
+                    captainCount[m.captain_name] = (captainCount[m.captain_name] || 0) + 1;
+                }
             });
+
+            const sorted = Object.entries(captainCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
 
             const ctx = document.getElementById('captainChart');
             if (!ctx) return;
@@ -1210,9 +795,9 @@
             appState.captainChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(captains).slice(0, 8),
+                    labels: sorted.map(([name]) => name),
                     datasets: [{
-                        data: Object.values(captains).slice(0, 8),
+                        data: sorted.map(([, count]) => count),
                         backgroundColor: [
                             'rgba(6, 182, 212, 0.8)',
                             'rgba(59, 130, 246, 0.8)',
@@ -1221,15 +806,19 @@
                             'rgba(236, 72, 153, 0.8)',
                             'rgba(168, 85, 247, 0.8)',
                             'rgba(34, 197, 94, 0.8)',
-                            'rgba(244, 63, 94, 0.8)'
+                            'rgba(244, 63, 94, 0.8)',
+                            'rgba(139, 92, 246, 0.8)',
+                            'rgba(99, 102, 241, 0.8)'
                         ]
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     plugins: {
                         legend: {
-                            labels: { color: 'var(--text-primary)' }
+                            labels: { color: 'var(--text-primary)' },
+                            position: 'right'
                         }
                     }
                 }
@@ -1237,48 +826,44 @@
         }
 
         function renderChipsUsed() {
-            // Mock data - replace with real chip tracking
-            document.querySelector('#chipsUsed .stat-card:nth-child(1) .stat-value').textContent = '2';
-            document.querySelector('#chipsUsed .stat-card:nth-child(2) .stat-value').textContent = '2';
-            document.querySelector('#chipsUsed .stat-card:nth-child(3) .stat-value').textContent = '0';
-            document.querySelector('#chipsUsed .stat-card:nth-child(4) .stat-value').textContent = '0';
+            document.getElementById('wildcardsCount').textContent = appState.managers.filter(m => m.chip_used === 'WC').length;
+            document.getElementById('bbCount').textContent = appState.managers.filter(m => m.chip_used === 'BB').length;
+            document.getElementById('fhCount').textContent = appState.managers.filter(m => m.chip_used === 'FH').length;
+            document.getElementById('tcCount').textContent = appState.managers.filter(m => m.chip_used === 'TC').length;
         }
 
-        function renderClassicLeague() {
-            if (!appState.classic?.standings?.results) {
-                document.getElementById('classicError').innerHTML = '<div class="error-message">Unable to load classic league data</div>';
+        async function renderClassicLeague() {
+            if (appState.managers.length === 0) {
+                document.getElementById('classicError').innerHTML = '<div class="error-message">Loading managers...</div>';
                 return;
             }
 
-            const standings = appState.classic.standings.results;
             const start = (appState.currentPage.classic - 1) * appState.itemsPerPage;
             const end = start + appState.itemsPerPage;
-            const paged = standings.slice(start, end);
+            const paged = appState.managers.slice(start, end);
 
-            let tableHtml = '<table><thead><tr><th>Rank</th><th>Manager</th><th>Team</th><th>Captain</th><th>GW Points</th><th>Month Total</th><th>Overall Points</th></tr></thead><tbody>';
-
-            paged.forEach((entry, i) => {
-                const rankIndicator = i === 0 ? '' : (Math.random() > 0.5 ? '📈' : '📉');
-                tableHtml += `
+            let html = '';
+            paged.forEach((m, i) => {
+                const rank = start + i + 1;
+                html += `
                     <tr>
-                        <td><strong>${start + i + 1}</strong> ${rankIndicator}</td>
-                        <td>${entry.player_name}</td>
-                        <td>${entry.entry_name}</td>
+                        <td><strong>${rank}</strong></td>
+                        <td>${m.manager_name}</td>
+                        <td>${m.team_name}</td>
+                        <td>${m.captain_name || '--'}</td>
+                        <td>${m.gw_points || 0}</td>
                         <td>--</td>
-                        <td>${entry.event_total || 0}</td>
-                        <td>--</td>
-                        <td><strong>${entry.total}</strong></td>
+                        <td><strong>${m.total_points || 0}</strong></td>
                     </tr>
                 `;
             });
 
-            tableHtml += '</tbody></table>';
-            document.getElementById('classicTable').innerHTML = tableHtml;
+            document.getElementById('classicBody').innerHTML = html;
             document.getElementById('classicTable').style.display = 'table';
             document.getElementById('classicError').innerHTML = '';
 
             // Pagination
-            const totalPages = Math.ceil(standings.length / appState.itemsPerPage);
+            const totalPages = Math.ceil(appState.managers.length / appState.itemsPerPage);
             let paginationHtml = '';
             for (let i = 1; i <= totalPages; i++) {
                 paginationHtml += `<button class="page-btn ${i === appState.currentPage.classic ? 'active' : ''}" onclick="changePage('classic', ${i})">${i}</button>`;
@@ -1286,84 +871,86 @@
             document.getElementById('classicPagination').innerHTML = paginationHtml;
         }
 
-        function renderLMS() {
-            if (!appState.lms?.standings?.results) {
-                document.getElementById('lmsError').innerHTML = '<div class="error-message">Unable to load LMS data</div>';
-                return;
-            }
+        async function renderLMS() {
+            const lmsManagers = appState.managers.filter(m =>
+                !appState.eliminations.some(e => e.manager_id === m.manager_id)
+            ).sort((a, b) => a.gw_points - b.gw_points);
 
-            const standings = appState.lms.standings.results.sort((a, b) => a.event_total - b.event_total);
             const start = (appState.currentPage.lms - 1) * appState.itemsPerPage;
             const end = start + appState.itemsPerPage;
-            const paged = standings.slice(start, end);
+            const paged = lmsManagers.slice(start, end);
 
-            let tableHtml = '<table><thead><tr><th>Danger Rank</th><th>Manager</th><th>Team</th><th>GW Points</th><th>Players</th></tr></thead><tbody>';
-
-            paged.forEach((entry, i) => {
+            let html = '';
+            paged.forEach((m, i) => {
                 const rank = start + i + 1;
-                tableHtml += `
-                    <tr>
-                        <td><strong>${rank}</strong> ${rank <= 2 ? '⚠️ DANGER' : ''}</td>
-                        <td>${entry.player_name}</td>
-                        <td>${entry.entry_name}</td>
-                        <td>${entry.event_total}${entry.event_transfers > 0 ? ` (-${entry.event_transfers * 4})` : ''}</td>
-                        <td>Players playing</td>
+                const isDanger = rank <= 2;
+                const rowClass = isDanger ? 'class="danger-zone"' : '';
+                html += `
+                    <tr ${rowClass}>
+                        <td><strong>${rank}</strong> ${isDanger ? '⚠️' : ''}</td>
+                        <td>${m.manager_name}</td>
+                        <td>${m.team_name}</td>
+                        <td>${m.gw_points || 0}</td>
+                        <td>Players yet to play</td>
                     </tr>
                 `;
             });
 
-            tableHtml += '</tbody></table>';
-            document.getElementById('lmsTable').innerHTML = tableHtml;
+            document.getElementById('lmsBody').innerHTML = html;
             document.getElementById('lmsTable').style.display = 'table';
 
             // Pagination
-            const totalPages = Math.ceil(standings.length / appState.itemsPerPage);
+            const totalPages = Math.ceil(lmsManagers.length / appState.itemsPerPage);
             let paginationHtml = '';
             for (let i = 1; i <= totalPages; i++) {
                 paginationHtml += `<button class="page-btn ${i === appState.currentPage.lms ? 'active' : ''}" onclick="changePage('lms', ${i})">${i}</button>`;
             }
             document.getElementById('lmsPagination').innerHTML = paginationHtml;
+
+            // Render eliminations
+            renderEliminationHistory();
         }
 
-        function renderH2H() {
-            if (!appState.h2h?.standings?.results) {
-                document.getElementById('h2hError').innerHTML = '<div class="error-message">Unable to load H2H data</div>';
-                return;
-            }
+        function renderEliminationHistory() {
+            let html = '';
+            appState.eliminations.forEach(e => {
+                html += `
+                    <tr>
+                        <td><strong>GW ${e.gw}</strong></td>
+                        <td>${e.manager_name}</td>
+                        <td>${e.gw_points}</td>
+                        <td><button class="delete-btn" onclick="deleteElimination(${e.id})">Delete</button></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('eliminationBody').innerHTML = html || '<tr><td colspan="4" style="text-align: center;">No eliminations yet</td></tr>';
+        }
 
-            const standings = appState.h2h.standings.results;
+        async function renderH2H() {
             const start = (appState.currentPage.h2h - 1) * appState.itemsPerPage;
             const end = start + appState.itemsPerPage;
-            const paged = standings.slice(start, end);
+            const paged = appState.managers.slice(start, end);
 
-            let tableHtml = '<table><thead><tr><th>Rank</th><th>Manager</th><th>Team</th><th>Played</th><th>Won</th><th>Drawn</th><th>Lost</th><th>Points</th></tr></thead><tbody>';
-
-            paged.forEach((entry, i) => {
-                tableHtml += `
+            let html = '';
+            paged.forEach((m, i) => {
+                html += `
                     <tr>
                         <td><strong>${start + i + 1}</strong></td>
-                        <td>${entry.player_name}</td>
-                        <td>${entry.entry_name}</td>
-                        <td>${entry.matches_played || 0}</td>
-                        <td>${entry.wins || 0}</td>
-                        <td>${entry.draws || 0}</td>
-                        <td>${entry.losses || 0}</td>
-                        <td><strong>${entry.points || 0}</strong></td>
+                        <td>${m.manager_name}</td>
+                        <td>${m.team_name}</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>0</td>
                     </tr>
                 `;
             });
 
-            tableHtml += '</tbody></table>';
-            document.getElementById('h2hTable').innerHTML = tableHtml;
+            document.getElementById('h2hBody').innerHTML = html;
             document.getElementById('h2hTable').style.display = 'table';
 
-            // Show knockout card if applicable
-            if (CONFIG.currentGW >= CONFIG.knockoutStartGW) {
-                document.getElementById('knockoutCard').style.opacity = '1';
-            }
-
-            // Pagination
-            const totalPages = Math.ceil(standings.length / appState.itemsPerPage);
+            const totalPages = Math.ceil(appState.managers.length / appState.itemsPerPage);
             let paginationHtml = '';
             for (let i = 1; i <= totalPages; i++) {
                 paginationHtml += `<button class="page-btn ${i === appState.currentPage.h2h ? 'active' : ''}" onclick="changePage('h2h', ${i})">${i}</button>`;
@@ -1371,54 +958,168 @@
             document.getElementById('h2hPagination').innerHTML = paginationHtml;
         }
 
-        function renderPrizes() {
-            if (!appState.classic?.standings?.results) return;
+        function renderAnnouncements() {
+            if (appState.announcements.length === 0) return;
 
-            // Top 8 classic league
-            const topEight = appState.classic.standings.results.slice(0, 8);
-            let prizeWinnersHtml = '';
-            topEight.forEach((entry, i) => {
-                const prize = PRIZE_STRUCTURE.classic[i + 1];
-                prizeWinnersHtml += `
+            let html = appState.announcements.map(a => `
+                <div class="announcement">
+                    📢 ${a.message || `GW ${a.gw} is a Mega GW!`}
+                </div>
+            `).join('');
+            document.getElementById('announcements').innerHTML = html;
+        }
+
+        // ========== ADMIN FUNCTIONS ==========
+        function authenticateAdmin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'baouss2025') {
+                appState.adminAuthenticated = true;
+                document.getElementById('adminAuth').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                populateAdminDropdowns();
+                renderAdminAnnouncements();
+            } else {
+                alert('❌ Incorrect password');
+            }
+        }
+
+        function populateAdminDropdowns() {
+            // Mega GW dropdown
+            let gwHtml = '<option>Select GW...</option>';
+            for (let i = appState.currentGW; i <= 38; i++) {
+                gwHtml += `<option value="${i}">GW ${i}</option>`;
+            }
+            document.getElementById('megaGWSelect').innerHTML = gwHtml;
+
+            // Elimination GW
+            let elimGWHtml = '<option>Select GW...</option>';
+            for (let i = 2; i <= appState.currentGW; i++) {
+                elimGWHtml += `<option value="${i}">GW ${i}</option>`;
+            }
+            document.getElementById('eliminationGW').innerHTML = elimGWHtml;
+
+            // Manager dropdown
+            let managerHtml = '<option>Select Manager...</option>';
+            appState.managers.forEach(m => {
+                managerHtml += `<option value="${m.manager_id}">${m.manager_name}</option>`;
+            });
+            document.getElementById('eliminationManager').innerHTML = managerHtml;
+        }
+
+        async function announceMegaGW() {
+            const gw = document.getElementById('megaGWSelect').value;
+            const message = document.getElementById('megaGWMessage').value;
+
+            if (gw === 'Select GW...') {
+                alert('Please select a GW');
+                return;
+            }
+
+            const { error } = await supabase.from('announcements').insert({
+                type: 'mega_gw',
+                gw: parseInt(gw),
+                message: message || `GW ${gw} is a Mega GW!`,
+                created_at: new Date().toISOString(),
+                expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+            });
+
+            if (error) {
+                console.error('Error:', error);
+                alert('Error announcing Mega GW');
+            } else {
+                alert('✅ Mega GW announced!');
+                getAnnouncements();
+                document.getElementById('megaGWSelect').value = 'Select GW...';
+                document.getElementById('megaGWMessage').value = '';
+            }
+        }
+
+        async function makeAnnouncement() {
+            const message = document.getElementById('customAnnouncement').value;
+            if (!message.trim()) {
+                alert('Please enter announcement');
+                return;
+            }
+
+            const { error } = await supabase.from('announcements').insert({
+                type: 'custom',
+                message: message,
+                created_at: new Date().toISOString()
+            });
+
+            if (error) {
+                console.error('Error:', error);
+                alert('Error posting announcement');
+            } else {
+                alert('✅ Announcement posted!');
+                getAnnouncements();
+                document.getElementById('customAnnouncement').value = '';
+            }
+        }
+
+        async function renderAdminAnnouncements() {
+            let html = '';
+            appState.announcements.forEach((a, idx) => {
+                html += `
                     <tr>
-                        <td>${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '🏆'} #${i + 1}</td>
-                        <td>${entry.player_name}</td>
-                        <td>${entry.total}</td>
-                        <td><strong>₹${prize.toLocaleString()}</strong></td>
+                        <td>${a.type === 'mega_gw' ? '🎪 Mega GW' : '📣 Custom'}</td>
+                        <td>${a.message}</td>
+                        <td><button class="delete-btn" onclick="deleteAnnouncement(${a.id})">Delete</button></td>
                     </tr>
                 `;
             });
-            document.getElementById('prizeWinnersBody').innerHTML = prizeWinnersHtml;
-
-            // MOTM
-            let motmHtml = '';
-            Object.entries(GW_MONTHS).forEach(([month, gws]) => {
-                if (gws[0] <= CONFIG.currentGW) {
-                    motmHtml += `
-                        <tr>
-                            <td>${month}</td>
-                            <td>TBD</td>
-                            <td>--</td>
-                            <td><span style="color: var(--success);">In Progress</span></td>
-                        </tr>
-                    `;
-                }
-            });
-            document.getElementById('motmCurrentBody').innerHTML = motmHtml;
+            document.getElementById('announcementBody').innerHTML = html || '<tr><td colspan="3" style="text-align: center;">No announcements</td></tr>';
         }
 
-        function renderReviews() {
-            // Mock reviews data - replace with real data
-            const reviewsHtml = `
-                <div style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(59, 130, 246, 0.05)); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                    <h3 style="color: var(--accent-cyan); margin-bottom: 10px;">GW9 Review</h3>
-                    <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 15px;">
-                        Arsenal edged Crystal Palace 0–1 away to stay top of the table. Bournemouth beat Nottingham Forest 2–0 at home to climb to 2nd place...
-                    </p>
-                    <button class="nav-tab" onclick="downloadReview('GW9')">📥 Download Review</button>
-                </div>
-            `;
-            document.getElementById('reviewsContent').innerHTML = reviewsHtml;
+        async function deleteAnnouncement(id) {
+            const { error } = await supabase.from('announcements').delete().eq('id', id);
+            if (error) {
+                console.error('Error:', error);
+            } else {
+                getAnnouncements();
+            }
+        }
+
+        async function addElimination() {
+            const gw = document.getElementById('eliminationGW').value;
+            const managerId = document.getElementById('eliminationManager').value;
+            const points = document.getElementById('eliminationPoints').value;
+
+            if (gw === 'Select GW...' || managerId === 'Select Manager...' || !points) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            const manager = appState.managers.find(m => m.manager_id == managerId);
+
+            const { error } = await supabase.from('lms_eliminations').insert({
+                gw: parseInt(gw),
+                manager_id: parseInt(managerId),
+                manager_name: manager.manager_name,
+                gw_points: parseInt(points),
+                created_at: new Date().toISOString()
+            });
+
+            if (error) {
+                console.error('Error:', error);
+                alert('Error adding elimination');
+            } else {
+                alert('✅ Elimination added!');
+                getEliminations();
+                renderEliminationHistory();
+                renderLMS();
+            }
+        }
+
+        async function deleteElimination(id) {
+            const { error } = await supabase.from('lms_eliminations').delete().eq('id', id);
+            if (error) {
+                console.error('Error:', error);
+            } else {
+                getEliminations();
+                renderEliminationHistory();
+                renderLMS();
+            }
         }
 
         // ========== UI FUNCTIONS ==========
@@ -1431,17 +1132,8 @@
         }
 
         function switchPrizeTab(tab) {
-            if (tab === 'rules') {
-                document.getElementById('rulesTab').style.display = 'block';
-                document.getElementById('winnersTab').style.display = 'none';
-                document.getElementById('rulesTabBtn').classList.add('active');
-                document.getElementById('winnersTabBtn').classList.remove('active');
-            } else {
-                document.getElementById('rulesTab').style.display = 'none';
-                document.getElementById('winnersTab').style.display = 'block';
-                document.getElementById('rulesTabBtn').classList.remove('active');
-                document.getElementById('winnersTabBtn').classList.add('active');
-            }
+            document.getElementById('rulesTab').style.display = tab === 'rules' ? 'block' : 'none';
+            document.getElementById('winnersTab').style.display = tab === 'winners' ? 'block' : 'none';
         }
 
         function changePage(league, page) {
@@ -1451,138 +1143,6 @@
             else if (league === 'h2h') renderH2H();
         }
 
-        function authenticateAdmin() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === 'baouss2025') {
-                appState.adminAuthenticated = true;
-                document.getElementById('adminAuth').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                populateAdminDropdowns();
-            } else {
-                alert('❌ Incorrect password');
-            }
-        }
-
-        function populateAdminDropdowns() {
-            // Populate Mega GW dropdown (current GW onwards)
-            let megaGWHtml = '<option>Select Gameweek...</option>';
-            for (let i = CONFIG.currentGW; i <= 38; i++) {
-                megaGWHtml += `<option value="${i}">GW ${i}</option>`;
-            }
-            document.getElementById('megaGWSelect').innerHTML = megaGWHtml;
-
-            // Populate rebuy manager dropdown
-            if (appState.classic?.standings?.results) {
-                let managerHtml = '<option>Select Manager...</option>';
-                appState.classic.standings.results.forEach(entry => {
-                    managerHtml += `<option value="${entry.entry}">${entry.player_name}</option>`;
-                });
-                document.getElementById('rebuyManagerSelect').innerHTML = managerHtml;
-            }
-        }
-
-        function announceMegaGW() {
-            const gw = document.getElementById('megaGWSelect').value;
-            const message = document.getElementById('megaGWMessage').value;
-
-            if (gw === 'Select Gameweek...') {
-                alert('Please select a gameweek');
-                return;
-            }
-
-            const announcement = {
-                type: 'mega_gw',
-                gw: parseInt(gw),
-                message: message,
-                timestamp: new Date().toLocaleString()
-            };
-
-            appState.megaGWs.push(announcement);
-            appState.announcements.push(`Attention Managers!! GW ${gw} is a Mega GW! Get your teams ready!!`);
-            renderAnnouncements();
-
-            document.getElementById('megaGWSelect').value = 'Select Gameweek...';
-            document.getElementById('megaGWMessage').value = '';
-            alert('✅ Mega GW announced!');
-        }
-
-        function makeAnnouncement() {
-            const message = document.getElementById('customAnnouncement').value;
-            if (!message.trim()) {
-                alert('Please enter an announcement');
-                return;
-            }
-
-            appState.announcements.push(message);
-            renderAnnouncements();
-
-            document.getElementById('customAnnouncement').value = '';
-            alert('✅ Announcement posted!');
-        }
-
-        function addLMSRebuy() {
-            const managerId = document.getElementById('rebuyManagerSelect').value;
-            const paid = document.getElementById('paymentStatus').checked;
-
-            if (managerId === 'Select Manager...') {
-                alert('Please select a manager');
-                return;
-            }
-
-            const rebuy = {
-                managerId: managerId,
-                paid: paid,
-                timestamp: new Date().toLocaleString()
-            };
-
-            appState.rebuys.push(rebuy);
-            renderRebuyList();
-
-            document.getElementById('rebuyManagerSelect').value = 'Select Manager...';
-            document.getElementById('paymentStatus').checked = false;
-            alert('✅ Rebuy added!');
-        }
-
-        function renderRebuyList() {
-            let html = '';
-            appState.rebuys.forEach((rebuy, idx) => {
-                const managerName = appState.classic?.standings?.results.find(m => m.entry == rebuy.managerId)?.player_name || 'Unknown';
-                html += `
-                    <tr>
-                        <td>${managerName}</td>
-                        <td>₹500</td>
-                        <td>${rebuy.paid ? '<span style="color: var(--success);">✅ Paid</span>' : '<span style="color: var(--text-secondary);">⏳ Pending</span>'}</td>
-                        <td><button class="nav-tab" onclick="deleteRebuy(${idx})" style="padding: 6px 12px; font-size: 0.85rem;">Delete</button></td>
-                    </tr>
-                `;
-            });
-            document.getElementById('rebuyBody').innerHTML = html || '<tr><td colspan="4" style="text-align: center; color: var(--text-secondary);">No rebuys yet</td></tr>';
-        }
-
-        function deleteRebuy(idx) {
-            appState.rebuys.splice(idx, 1);
-            renderRebuyList();
-        }
-
-        function renderAnnouncements() {
-            if (appState.announcements.length === 0) {
-                document.getElementById('announcements').innerHTML = '';
-                return;
-            }
-
-            let html = appState.announcements.map(ann => `<div class="announcement">${ann}</div>`).join('');
-            document.getElementById('announcements').innerHTML = html;
-        }
-
-        function downloadReview(gw) {
-            alert('✅ Review download feature coming soon!');
-        }
-
-        function showError(message) {
-            console.error(message);
-            alert(message);
-        }
-
         // ========== INITIALIZATION ==========
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.addEventListener('click', function() {
@@ -1590,15 +1150,36 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Baouss Pro League Dashboard Initializing...');
-            loadAllData();
-            setInterval(loadAllData, 60000);
-        });
+        async function initializeApp() {
+            console.log('🚀 Initializing dashboard...');
+            
+            // Load data
+            await getCurrentGW();
+            await getManagerData();
+            await getAnnouncements();
+            await getEliminations();
 
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
+            // Render all pages
+            await renderHome();
+            await renderClassicLeague();
+            await renderLMS();
+            await renderH2H();
+
+            console.log('✅ Dashboard ready!');
+
+            // Auto-refresh every 30 seconds
+            setInterval(async () => {
+                await getManagerData();
+                await getAnnouncements();
+                await getEliminations();
+                await renderHome();
+                await renderClassicLeague();
+                await renderLMS();
+                await renderH2H();
+            }, 30000);
         }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
