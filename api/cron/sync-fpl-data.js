@@ -1,11 +1,21 @@
-// api/sync-fpl-data.js - Vercel Cron Job to sync FPL data to Supabase
-
+// api/cron/sync-fpl-data.js - FIXED VERSION with comprehensive error logging
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
+// Initialize Supabase client
+let supabase;
+try {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) {
+    console.error('[FATAL] Missing Supabase credentials');
+  } else {
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_KEY
+    );
+    console.log('[INIT] Supabase client initialized');
+  }
+} catch (error) {
+  console.error('[FATAL] Supabase initialization error:', error.message);
+}
 
 const CONFIG = {
   classicLeagueId: 1229613,
@@ -14,8 +24,17 @@ const CONFIG = {
 };
 
 async function fetchFPL(endpoint) {
-  const response = await fetch(`https://fantasy.premierleague.com/api${endpoint}`);
-  if (!response.ok) throw new Error(`FPL API error: ${response.status}`);
+  const url = `https://fantasy.premierleague.com/api${endpoint}`;
+  console.log(`[FPL] Fetching: ${url}`);
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+      'Accept': 'application/json'
+    }
+  });
+  if (!response.ok) {
+    throw new Error(`FPL API ${endpoint} returned ${response.status}`);
+  }
   return response.json();
 }
 
@@ -24,122 +43,105 @@ async function getCurrentGW() {
     const bootstrap = await fetchFPL('/bootstrap-static/');
     return bootstrap.events.find(e => e.is_current)?.id || 11;
   } catch (error) {
-    console.error('Error detecting current GW:', error);
+    console.error('[ERROR] getCurrentGW:', error.message);
     return 11;
   }
 }
 
-async function getAllManagersFromLeague(leagueId, pageStandings = 1) {
+async function fetchAllManagers(leagueId, leagueName) {
   const managers = [];
-  try {
-    const response = await fetchFPL(`/leagues-classic/${leagueId}/standings/?page_standings=${pageStandings}`);
-    
-    if (response.standings?.results) {
-      managers.push(...response.standings.results);
-    }
-    
-    // Check if there's more pages
-    if (response.standings?.has_next) {
-      const nextPageManagers = await getAllManagersFromLeague(leagueId, pageStandings + 1);
-      managers.push(...nextPageManagers);
-    }
-    
-    return managers;
-  } catch (error) {
-    console.error(`Error fetching league ${leagueId}:`, error);
-    return managers;
-  }
-}
+  let page = 1;
+  let hasMore = true;
 
-async function getManagerDetails(managerId) {
-  try {
-    const response = await fetchFPL(`/entry/${managerId}/`);
-    return response;
-  } catch (error) {
-    console.error(`Error fetching manager ${managerId}:`, error);
-    return null;
-  }
-}
-
-async function getManagerGWPicks(managerId, gw) {
-  try {
-    const response = await fetchFPL(`/entry/${managerId}/event/${gw}/picks/`);
-    return response;
-  } catch (error) {
-    console.error(`Error fetching picks for manager ${managerId}:`, error);
-    return null;
-  }
-}
-
-async function syncManagerData() {
-  console.log('📥 Starting FPL data sync...');
-  
-  try {
-    const currentGW = await getCurrentGW();
-    console.log(`Current GW: ${currentGW}`);
-    
-    // Fetch all managers from classic league (all pages)
-    const allManagers = await getAllManagersFromLeague(CONFIG.classicLeagueId);
-    console.log(`Found ${allManagers.length} managers`);
-    
-    if (allManagers.length === 0) {
-      return { success: false, message: 'No managers found' };
-    }
-    
-    // Sync each manager
-    for (const manager of allManagers) {
-      try {
-        const details = await getManagerDetails(manager.entry);
-        if (!details) continue;
-        
-        // Get current GW picks for captain info
-        const picks = await getManagerGWPicks(manager.entry, currentGW);
-        const captain = picks?.picks?.find(p => p.is_captain);
-        const captainId = captain?.element || null;
-        
-        // Upsert to Supabase
-        await supabase.from('manager_data').upsert({
-          manager_id: manager.entry,
-          entry_id: manager.entry,
-          manager_name: manager.player_name,
-          team_name: manager.entry_name,
-          total_points: manager.total,
-          overall_rank: manager.rank,
-          gw_points: manager.event_total || 0,
-          captain_id: captainId,
-          captain_name: details.last_name || 'Unknown',
-          value: details.value || 0,
-          bank: details.bank || 0,
-          transfers_made: details.transfers_made || 0,
-          last_updated: new Date().toISOString()
-        }, { onConflict: 'manager_id' });
-      } catch (error) {
-        console.error(`Error syncing manager ${manager.entry}:`, error);
+  while (hasMore) {
+    try {
+      console.log(`[${leagueName}] Fetching page ${page}`);
+      const data = await fetchFPL(`/leagues-classic/${leagueId}/standings/?page_standings=${page}`);
+      
+      if (data.standings?.results) {
+        managers.push(...data.standings.results);
+        hasMore = data.standings.has_next;
+        page++;
+      } else {
+        hasMore = false;
       }
+    } catch (error) {
+      console.error(`[ERROR] Fetch ${leagueName} page ${page}:`, error.message);
+      hasMore = false;
     }
-    
-    // Update current GW
-    await supabase.from('season_snapshot').upsert({
-      id: 1,
-      current_gw: currentGW,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    
-    console.log('✅ Sync completed');
-    return { success: true, managers: allManagers.length, gw: currentGW };
-    
-  } catch (error) {
-    console.error('Sync failed:', error);
-    return { success: false, error: error.message };
   }
+
+  console.log(`[${leagueName}] Total managers: ${managers.length}`);
+  return managers;
 }
 
 export default async function handler(req, res) {
-  // Verify this is a cron request from Vercel
-  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+  const startTime = Date.now();
+  console.log('\n=== FPL Sync Started ===');
+  console.log('[TIME]', new Date().toISOString());
+
+  // Check CRON_SECRET
+  const cronSecret = req.headers['x-vercel-cron-secret'] || req.headers['authorization']?.replace('Bearer ', '');
+  if (cronSecret !== process.env.CRON_SECRET) {
+    console.error('[AUTH] Invalid CRON_SECRET');
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
-  const result = await syncManagerData();
-  res.status(200).json(result);
+
+  try {
+    // Check Supabase
+    if (!supabase) {
+      throw new Error('Supabase client not initialized');
+    }
+
+    const currentGW = await getCurrentGW();
+    console.log('[GW] Current:', currentGW);
+
+    // Fetch all leagues
+    const [classicManagers, lmsManagers, h2hManagers] = await Promise.all([
+      fetchAllManagers(CONFIG.classicLeagueId, 'Classic'),
+      fetchAllManagers(CONFIG.lmsLeagueId, 'LMS'),
+      fetchAllManagers(CONFIG.h2hLeagueId, 'H2H')
+    ]);
+
+    // Prepare manager data
+    const managerData = classicManagers.map(m => ({
+      manager_id: m.entry,
+      manager_name: m.player_name,
+      team_name: m.entry_name,
+      gw: currentGW,
+      gw_points: m.event_total || 0,
+      total_points: m.total || 0,
+      overall_rank: m.rank || 0,
+      last_updated: new Date().toISOString()
+    }));
+
+    // Insert into Supabase
+    console.log(`[DB] Inserting ${managerData.length} manager records`);
+    const { data, error } = await supabase
+      .from('manager_data')
+      .upsert(managerData, { onConflict: 'manager_id,gw' });
+
+    if (error) {
+      throw new Error(`Supabase insert failed: ${error.message}`);
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[SUCCESS] Sync completed in ${duration}ms`);
+    console.log('=== FPL Sync Ended ===\n');
+
+    return res.status(200).json({
+      success: true,
+      gw: currentGW,
+      managersProcessed: managerData.length,
+      duration: `${duration}ms`
+    });
+
+  } catch (error) {
+    console.error('[FATAL ERROR]', error.message);
+    console.error('[STACK]', error.stack);
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 }
